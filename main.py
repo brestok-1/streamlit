@@ -3,11 +3,10 @@ import os
 import anthropic
 import streamlit as st
 import whisper
+import youtube_dl
+import yt_dlp
 from autogen import AssistantAgent, UserProxyAgent
-from dotenv import load_dotenv
-from pytube import YouTube
-
-load_dotenv()
+from moviepy.audio.io.AudioFileClip import AudioFileClip
 
 anthropic_api_key = os.getenv('API_KEY')
 
@@ -15,14 +14,21 @@ os.environ["AUTOGEN_USE_DOCKER"] = "no"
 
 
 def download_video(url):
-    yt = YouTube(url)
-    stream = yt.streams.filter(only_audio=True).first()
-    stream.download(filename='video.mp4')
+    ydl_opts = {
+        'format': 'bestaudio[ext=webm]/best',
+        'outtmpl': "audio.webm",
+        'noplaylist': True,
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+    audio_clip = AudioFileClip("audio.webm")
+    audio_clip.write_audiofile("audio.mp3")
+    audio_clip.close()
 
 
 def transcribe_audio():
     model = whisper.load_model("base")
-    result = model.transcribe('video.mp4')
+    result = model.transcribe('audio.mp3')
     return result['text']
 
 

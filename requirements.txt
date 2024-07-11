@@ -21,6 +21,7 @@ docker==7.1.0
 docopt==0.6.2
 docutils==0.21.2
 exceptiongroup==1.2.1
+ffmpeg==1.4
 filelock==3.15.4
 FLAML==2.1.2
 fsspec==2024.6.1
@@ -83,6 +84,7 @@ pycryptodomex==3.20.0
 pydantic==2.8.2
 pydantic_core==2.20.1
 pydeck==0.9.1
+pydub==0.25.1
 Pygments==2.18.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1

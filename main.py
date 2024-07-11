@@ -59,6 +59,8 @@ class YouTubeSummarizerAgent(AssistantAgent):
         download_video(url)
         st.write("Transcribing video...")
         transcription = transcribe_audio()
+        os.remove('audio.webm')
+        os.remove('audio.mp3')
         st.text_area("Transcription", transcription, height=300, key="transcription")
         st.write("Summarizing transcription...")
         summary = summarize_text(transcription, custom_prompt, custom_act)

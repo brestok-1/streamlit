@@ -19,7 +19,7 @@ def download_video(url):
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
-        'outtmpl': "audio.mp3"
+        'outtmpl': "audio"
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -27,7 +27,7 @@ def download_video(url):
 
 
 def transcribe_audio():
-    model = whisper.load_model("base")
+    model = whisper.load_model("small")
     result = model.transcribe('audio.mp3')
     return result['text']
 
@@ -59,7 +59,6 @@ class YouTubeSummarizerAgent(AssistantAgent):
         download_video(url)
         st.write("Transcribing video...")
         transcription = transcribe_audio()
-        os.remove('audio.webm')
         os.remove('audio.mp3')
         st.text_area("Transcription", transcription, height=300, key="transcription")
         st.write("Summarizing transcription...")

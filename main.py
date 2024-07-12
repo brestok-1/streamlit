@@ -2,13 +2,16 @@ import os
 
 import anthropic
 import streamlit as st
-import whisper
 import yt_dlp
 from autogen import AssistantAgent, UserProxyAgent
+from dotenv import load_dotenv
+from openai import OpenAI
+
+load_dotenv()
 
 anthropic_api_key = os.getenv('API_KEY')
 
-os.environ["AUTOGEN_USE_DOCKER"] = "no"
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 
 def download_video(url):
@@ -27,9 +30,12 @@ def download_video(url):
 
 
 def transcribe_audio():
-    model = whisper.load_model("small")
-    result = model.transcribe('audio.mp3')
-    return result['text']
+    audio_file = open('audio.mp3', 'rb')
+    transcription = client.audio.transcriptions.create(
+        model="whisper-1",
+        file=audio_file
+    )
+    return transcription.text
 
 
 def summarize_text(text, custom_prompt, custom_act):

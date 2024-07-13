@@ -1,98 +1,78 @@
-import os
-
-import anthropic
 import streamlit as st
-import yt_dlp
-from autogen import AssistantAgent, UserProxyAgent
-from dotenv import load_dotenv
-from openai import OpenAI
 
-load_dotenv()
-
-anthropic_api_key = os.getenv('API_KEY')
-
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+from article import ArticleUserAgent
+from podcasts import PodcastUserAgent
+from youtube import YouTubeUserAgent
 
 
-def download_video(url):
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-        'outtmpl': "audio"
-    }
-
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
-
-
-def transcribe_audio():
-    audio_file = open('audio.mp3', 'rb')
-    transcription = client.audio.transcriptions.create(
-        model="whisper-1",
-        file=audio_file
-    )
-    return transcription.text
-
-
-def summarize_text(text, custom_prompt, custom_act):
-    client = anthropic.Client(api_key=anthropic_api_key)
-    prompt = (
-        f"Please summarize the following text. {custom_prompt} {custom_act}\n\n"
-        f"{text}\n\n"
-    )
-    response = client.completions.create(
-        prompt=f"\n\nHuman: {prompt}\n\nAssistant:",
-        model="claude-v1",
-        temperature=1.0,
-        max_tokens_to_sample=150,
-        stop_sequences=["\n\nHuman:"],
-        top_k=40,
-        top_p=0.9
-    )
-    return response.completion.strip()
-
-
-class YouTubeSummarizerAgent(AssistantAgent):
-    def __init__(self, name="YouTubeSummarizer"):
-        super().__init__(name=name)
-
-    def summarize(self, url, custom_prompt, custom_act):
-        st.write("Downloading video...")
-        download_video(url)
-        st.write("Transcribing video...")
-        transcription = transcribe_audio()
-        st.text_area("Transcription", transcription, height=300, key="transcription")
-        st.write("Summarizing transcription...")
-        summary = summarize_text(transcription, custom_prompt, custom_act)
-        st.text_area("Summary", summary, height=150, key="summary")
-
-
-class UserAgent(UserProxyAgent):
-    def __init__(self, name="UserAgent"):
-        super().__init__(name=name)
-
-    def request_summary(self, url, custom_prompt, custom_act):
-        agent = YouTubeSummarizerAgent()
-        agent.summarize(url, custom_prompt, custom_act)
+def init_session_state():
+    if 'button1_clicked' not in st.session_state:
+        st.session_state.button1_clicked = False
+    if 'button2_clicked' not in st.session_state:
+        st.session_state.button2_clicked = False
+    if 'button3_clicked' not in st.session_state:
+        st.session_state.button3_clicked = False
+    if 'url' not in st.session_state:
+        st.session_state.url = ""
+    if 'custom_prompt' not in st.session_state:
+        st.session_state.custom_prompt = "Act as a researcher and provide a concise summary."
+    if 'custom_act' not in st.session_state:
+        st.session_state.custom_act = "Provide the summary in 5 sentences."
 
 
 def main():
-    st.title("YouTube Video Transcription and Summarizer")
+    st.title("Summarizer")
 
-    url = st.text_input("Enter YouTube Video URL")
-    custom_prompt = st.text_input("Enter custom prompt for summarization",
-                                  value="Act as a researcher and provide a concise summary.")
-    custom_act = st.text_input("Enter additional instructions for summarization",
-                               value="Provide the summary in 5 sentences.")
+    # Initialize session state
+    init_session_state()
 
-    user_agent = UserAgent()
+    col1, col2, col3 = st.columns(3)
 
-    if st.button("Run"):
-        user_agent.request_summary(url, custom_prompt, custom_act)
+    if col1.button('Youtube video summarizer', key='button1'):
+        st.session_state.button1_clicked = True
+        st.session_state.button2_clicked = False
+        st.session_state.button3_clicked = False
+    if col2.button('Article summarizer', key='button2'):
+        st.session_state.button1_clicked = False
+        st.session_state.button2_clicked = True
+        st.session_state.button3_clicked = False
+    if col3.button('Podcast Summarizer', key='button3'):
+        st.session_state.button1_clicked = False
+        st.session_state.button2_clicked = False
+        st.session_state.button3_clicked = True
+
+    if st.session_state.button1_clicked:
+        st.session_state.url = st.text_input("Enter YouTube Video URL", value=st.session_state.url)
+        st.session_state.custom_prompt = st.text_input("Enter custom prompt for summarization",
+                                                       value=st.session_state.custom_prompt)
+        st.session_state.custom_act = st.text_input("Enter additional instructions for summarization",
+                                                    value=st.session_state.custom_act)
+        user_agent = YouTubeUserAgent()
+        if st.button("Run"):
+            user_agent.request_summary(st.session_state.url, st.session_state.custom_prompt,
+                                       st.session_state.custom_act)
+
+    if st.session_state.button2_clicked:
+        st.session_state.url = st.text_input("Enter Article URL", value=st.session_state.url)
+        st.session_state.custom_prompt = st.text_input("Enter custom prompt for summarization",
+                                                       value=st.session_state.custom_prompt)
+        st.session_state.custom_act = st.text_input("Enter additional instructions for summarization",
+                                                    value=st.session_state.custom_act)
+        user_agent = ArticleUserAgent()
+        if st.button("Run"):
+            user_agent.request_summary(st.session_state.url, st.session_state.custom_prompt,
+                                       st.session_state.custom_act)
+
+    if st.session_state.button3_clicked:
+        st.session_state.url = st.text_input('Enter Podcast URL', value=st.session_state.url)
+        st.session_state.custom_prompt = st.text_input("Enter custom prompt for summarization",
+                                                       value=st.session_state.custom_prompt)
+        st.session_state.custom_act = st.text_input("Enter additional instructions for summarization",
+                                                    value=st.session_state.custom_act)
+        user_agent = PodcastUserAgent()
+        if st.button("Run"):
+            user_agent.request_summary(st.session_state.url, st.session_state.custom_prompt,
+                                       st.session_state.custom_act)
 
 
 if __name__ == "__main__":

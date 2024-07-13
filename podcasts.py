@@ -1,5 +1,4 @@
 import os
-import subprocess
 
 import anthropic
 import feedparser
@@ -9,8 +8,6 @@ import yt_dlp
 from autogen import AssistantAgent, UserProxyAgent
 from dotenv import load_dotenv
 from openai import OpenAI
-from savify import Savify, Format, Type
-from savify.utils import PathHolder
 
 load_dotenv()
 
@@ -33,8 +30,7 @@ def download_audio(url):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
     elif 'spotify.com' in url:
-        s = Savify(download_format=Format.MP3, path_holder=PathHolder(data_path='audio'))
-        s.download(url, query_type=Type.TRACK)
+        raise Exception
     elif 'apple.com' in url:
         feed = feedparser.parse(url)
         for entry in feed.entries:

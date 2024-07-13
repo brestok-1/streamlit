@@ -92,6 +92,3 @@ class PodcastUserAgent(UserProxyAgent):
         agent = PodcastSummarizerAgent()
         agent.summarize(url, custom_prompt, custom_act)
 
-
-download_audio('https://open.spotify.com/episode/6TieqKcrajx2UJ9c8JAluk')
-print('hu')
